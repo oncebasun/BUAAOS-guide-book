@@ -29,10 +29,29 @@
 After these 5 steps, you have had the environment to build this project.
 
 ### Build to PDF
-You can build with the commond as follow:
+Each time before build it, make sure the three lines as follow in `guide-book.tex` (their line numbers are 29~31) are uncommented:
+
+```latex
+%\setCJKmainfont[BoldFont={AdobeHeitiStd-Regular},ItalicFont={AdobeKaitiStd-Regular}]{AdobeSongStd-Light}
+%\setCJKsansfont[BoldFont={AdobeHeitiStd-Regular}]{AdobeKaitiStd-Regular}
+%\setCJKmonofont{AdobeFangsongStd-Regular}
+```
+
+Then, you can build with the commond as follow:
 
 ```shell
 cd guide-book
 make
 ```
 Then you well get the `guide-book.pdf` in the dictionary `guide-book`.
+
+### Before Push to Travis-CI
+Before push this repository to Travis-CI, remember to comment out the three lines in `guide-book.tex`:
+
+```latex
+\setCJKmainfont[BoldFont={AdobeHeitiStd-Regular},ItalicFont={AdobeKaitiStd-Regular}]{AdobeSongStd-Light}
+\setCJKsansfont[BoldFont={AdobeHeitiStd-Regular}]{AdobeKaitiStd-Regular}
+\setCJKmonofont{AdobeFangsongStd-Regular}
+```
+
+
