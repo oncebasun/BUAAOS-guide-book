@@ -33,4 +33,4 @@ deploy:
   file: guide-book.pdf
   skip_cleanup: true
   on:
-    repo: SivilTaram/BUAAOS-guide-book
+    repo: oncebasun/BUAAOS-guide-book
