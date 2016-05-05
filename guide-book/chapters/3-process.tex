@@ -527,8 +527,8 @@ END(except_vec3)
   \caption{CR寄存器}\label{fig:3-CauseRegister.png}
 \end{figure}
 图\ref{fig:3-CauseRegister.png}是MIPS3000中Cause Register寄存器。
-其中保存着CPU中哪一些中断或者异常已经发生。bit2~bit6保存着异常码，也就是根据异常码来识别具体哪一个异常发生了。
-bit8~bit15保存着哪一些中断发生了。其他的一些位含义在此不涉及，可参看MIPS开发手册。
+其中保存着CPU中哪一些中断或者异常已经发生。bit2至bit6保存着异常码，也就是根据异常码来识别具体哪一个异常发生了。
+bit8至bit15保存着哪一些中断发生了。其他的一些位含义在此不涉及，可参看MIPS开发手册。
 
 这个.text.exec\_vec3 段将通过链接器放到特定的位置，在R3000中要求是放到0x80000080地址处，
 这个地址处存放的是异常处理程序的入口地址。一旦CPU发生异常，就会自动跳转到0x80000080地址处，
