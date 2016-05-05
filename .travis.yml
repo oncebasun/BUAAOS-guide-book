@@ -24,14 +24,14 @@ before_install:
 script:
 - cd guide-book
 - make
-- ls
 - cd ..
-- ls
+- mv guide-book/guide-book.pdf guide-book.pdf
 deploy:
   all_branches: true
   provider: releases
   api_key:
     secure: Yi/f3naw7C5RbnEdSw1UGg3hxhnbx//oE1gSBB+XOx24Fk+53PKqeu0SWj5VDZhhdu9YF2dof+TLiatwvE6ycbSj8O5LGKbr5aGymaPLjaiqBpmRzU3PG8SJ3Zv16agzCQVlwICHHjLY2vc2r4mnIILhHeVSepwMgMJc1W5b1zn2Z3ItnPsjLlP7gwetVXVuXribGVbR2DvuDcE6sbBEC+lUerx4haVCCcnewemw8gaCChwoGzHxxy8RPiySYifhK9cpuEGln3cWT57taLiLSbEqxrLBWsQ8+SPKUGWeduhkuexTosG7w1vemIMoe+/y6o0cn/p4JIJ8F9MpYHCZjQpn3ywE56eH0t+R38zwl1typQAD/x9Y6riFZdEYuvxkqrWF6VRQG8LYPq2pRLAWmYXZNuOScrV2vR3Loa3IKEKUxjdNDmB1kHVIKhiCt4HSwCdVXdbSZTyqWBpPS35p3n86nKF8Oi/JpudspFOIESsAWKWyaOVZfvgzQG8eZJWRQvwMQh1Gbc5XM+BQDuoG/SDti+088T0az3OGnaJsCNGPG1fvL0q3TCjKACtqEz89jA3BiWiewKg5kgD+t0KpSpNdy8rVGG5M+o8XUHUBfYvuHDVWJlN6RsaOmbAcWnVCQotjX9evWd8q2S2RTRgEJLWAa1aTVj+8X2iSWCkSw6Y=
-  file: guide-book/guide-book.pdf
+  file: guide-book.pdf
+  skip_cleanup: true
   on:
     repo: oncebasun/BUAAOS-guide-book
