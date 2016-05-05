@@ -18,14 +18,14 @@
 \subsection{初窥管道}
 
 通俗来讲，管道就像家里的自来水管：一端用于注入水，一端用于放出水，且水只能在一个方向上流动，而不能双向流动，所以说管道是典型的单向通信。管道又叫做匿名管道，只能用在具有公共祖先的进程之间使用，通常使用在父子进程之间通信。
- 
+
 在Unix中，管道由pipe函数创建，函数原型如下：
 
 \begin{minted}[linenos]{c}
 	#include<unistd.h>
-	
+
 	int　　pipe(int fd[2]); 成功返回0，否则返回-1；
-	
+
 	参数fd返回两个文件描述符，fd[0]对应读端，fd[1]对应写端。
 \end{minted}
 
@@ -66,21 +66,21 @@ pipe(int pfd[2])
 {
 	int r, va;
 	struct Fd *fd0, *fd1;
-	
+
 	if ((r = fd_alloc(&fd0)) < 0
 	||  (r = syscall_mem_alloc(0, (u_int)fd0, PTE_V|PTE_R|PTE_LIBRARY)) < 0)
 	goto err;
-	
+
 	if ((r = fd_alloc(&fd1)) < 0
 	||  (r = syscall_mem_alloc(0, (u_int)fd1, PTE_V|PTE_R|PTE_LIBRARY)) < 0)
 	goto err1;
-	
+
 	va = fd2data(fd0);
 	if ((r = syscall_mem_alloc(0, va, PTE_V|PTE_R|PTE_LIBRARY)) < 0)
 	goto err2;
 	if ((r = syscall_mem_map(0, va, 0, fd2data(fd1), PTE_V|PTE_R|PTE_LIBRARY)) < 0)
 	goto err3;
-	
+
 	...
 }
 \end{minted}
@@ -96,7 +96,7 @@ pipe(int pfd[2])
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=15cm]{6-pipe-after-fork.eps}
-	\caption{父子进程与管道缓冲区}\label{fig:6-pipe-after-fork} 
+	\caption{父子进程与管道缓冲区}\label{fig:6-pipe-after-fork}
 \end{figure}
 
 实际上，在父子进程中各自close掉不再使用的端口后，父子进程与管道缓冲区的关系如下图：
@@ -104,7 +104,7 @@ pipe(int pfd[2])
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=15cm]{6-pipe-after-close.eps}
-	\caption{关闭不使用的端口后}\label{fig:6-pipe-after-close} 
+	\caption{关闭不使用的端口后}\label{fig:6-pipe-after-close}
 \end{figure}
 
 下面我们来讲一下\mintinline{c}|struct Pipe|，并开始着手填写操作管道端的函数。
@@ -165,11 +165,11 @@ pageref(rfd) + pageref(wfd) = pageref(pipe)\label{variant}
 
 实际上，因为管道本身的共享性质，所以在管道中有一系列的竞争情况。在当前这种不加锁控制的情况下，我们无法保证\mintinline{c}|_pipeisclosed|用于管道另一端关闭的判断一定返回正确的结果。
 
-我们重新看之前写的\mintinline{c}|_pipeisclosed|函数。在这个函数中我们对\mintinline{c}|pageref(fd structure)与 pageref(pipe structure)|进行了等价关系的判断。假如不考虑进程竞争，不论是在读者还是写者进程中，我们会认为:
+我们重新看之前写的\mintinline{c}|_pipeisclosed|函数。在这个函数中我们对\mintinline{c}|pageref(fd structure)|与 \mintinline{c}|pageref(pipe structure)|进行了等价关系的判断。假如不考虑进程竞争，不论是在读者还是写者进程中，我们会认为:
 
 \begin{itemize}
 	\item 对fd和对pipe的pp\_ref 的\textbf{写入}是同步的。
-	\item 对fd和对pipe的pp\_ref 的\textbf{读取}是同步的。 
+	\item 对fd和对pipe的pp\_ref 的\textbf{读取}是同步的。
 \end{itemize}
 
 但现在我们处于进程竞争、执行顺序不定的情景下，上述两种情况现在都会出现不同步的现象。想想看，如果在下面这种场景下，我们前面提到的等式\ref{variant}还是恒成立的吗：
@@ -220,7 +220,7 @@ pageref(rfd) + pageref(wfd) = pageref(pipe)\label{variant}
 \begin{thinking}\label{think-race}
 	仔细阅读上面这段话，并思考下列问题
 	\begin{itemize}
-		\item 
+		\item
 		按照上述说法控制\textbf{pipeclose}中fd和pipe unmap的顺序，是否可以解决上述场景的进程竞争问题？给出你的分析过程。
 		\item
 		我们只分析了close时的情形，那么对于dup中出现的情况又该如何解决？请模仿上述材料写写你的理解。
@@ -296,13 +296,13 @@ shell本质上也是一个用户进程。它解释shell命令的工作是通过�
 
 \begin{minted}[linenos]{c}
 	:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-	
+
 	::                                                         ::
-	
+
 	::              Super Shell  V0.0.0_1                      ::
-	
+
 	::                                                         ::
-	
+
 	:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	\$
 \end{minted}
