@@ -21,8 +21,10 @@ MMU，即内存管理单元（memory‐management unit）。MMU 是 CPU 中用�
 \end{note}
 
 \begin{note}
-TLB，即后备缓冲（translation lookaside buffer）。TLB 是将程序使用的地址（虚拟地址）翻译成物理地址
-（访问内存的地址）的硬件。
+TLB，即翻译后备缓冲（translation lookaside buffer, 这个全称对你理解这个术语可能不会帮多少忙）。
+TLB 是将程序使用的地址（虚拟地址）翻译成物理地址（访问内存的地址）的硬件。TLB在大多数时候只能映射PC
+物理内存空间的一小部分，主要是作为一个软件管理的地址翻译的缓存来使用。当一个需要的地址翻译不在TLB中时，
+就会产生一个异常，而由异常处理程序来计算并装载正确的翻译。在我们之后的工作中，我们也会看到这一点。
 \end{note}
 
 \section{MIPS虚存映射布局}
@@ -47,26 +49,47 @@ TLB，即后备缓冲（translation lookaside buffer）。TLB 是将程序使用
   这段地址只能在内核态下使用，并且需要 MMU 的转换。
 \end{enumerate}
 
-\section{内存管理}
+\section{内存管理与内存翻译}
 
-在第一实验中，我们将内核加载到内存中的 kseg0 区域(0x80010000)，成功启动并跳转到 init/main.c 中的
- main 函数开始运行，现在我们需要在 main 函数中调用定义在 init/init.c 中的 mips\_init() 函数，并
-进一步通过
-
-\begin{enumerate}
-  \item \mintinline{c}|mips_detect_memory()|;
-  \item \mintinline{c}|mips_vm_init()|;
-  \item \mintinline{c}|page_init()|;
-\end{enumerate}
-
-这三个函数来实现内存管理的相关数据结构的初始化。
+  内存管理的实质是尾每个程序提供自己的内存空间。最为朴素的内存管理就是直接将物理内存分配给程序，一个萝卜一个坑。
+  但从之前的叙述中，我们可以发现，MIPS系统中，使用了虚拟内存的技术。因此在我们的系统中，同时存在着两套地址，
+  一套是真实的物理地址，另一套则是虚拟地址，这为我们的内存管理带来了许多内存翻译的工作。这些工作大多就是由
+  前文所述的MMU来完成。
+  为什么我们要这么做呢？原因有很多：
+    \begin{enumerate}
+      \item 隐藏与保护：因为加入了虚拟内存这一中间层，真实的物理地址对用户级程序是不可见的，它只能访问
+      操作系统允许其访问的内存区域。
+      \item 为程序分配连续的内存空间：利用虚拟内存，操作系统可以从物理分散的内存页中，构建连续的程序空间，
+      这使得我们拥有更高的内存利用率。
+      \item 扩展地址空间范围：如前文所述，通过虚拟内存，MIPS32位机拥有了4GB的寻址能力，这真的很cool。:)
+      \item 使内存映射适合你的程序：在大型操作系统中，可能存在相同程序的多个副本同时运行，这时候通过内存翻译
+      这一中间层，你能使他们都使用相同的程序地址，这让很多工作都简单了很多。
+      \item 重定位：程序入口地址和预先声明的数据在程序编译的过程中就确定了。但通过MMU的内存翻译，我们能够让程
+      序运行在内存中的任何位置。
+    \end{enumerate}
+  为了这些好处，我们需要付出地址翻译工作的代价。接下来我们在lab的工作中，也将一直遇到这个问题。建议各位在lab的
+  过程中，不妨思考当前我们使用的这个地址究竟是物理地址还是虚拟地址，搞清楚这一点，对我们的lab和操作系统的理解都
+  大有帮助。
 
 \section{物理内存管理}
 
+\subsection{初始化流程说明}
+  在第一实验中，我们将内核加载到内存中的 kseg0 区域(0x80010000)，成功启动并跳转到 init/main.c 中的
+   main 函数开始运行，现在我们需要在 main 函数中调用定义在 init/init.c 中的 mips\_init() 函数，并
+  进一步通过
+
+  \begin{enumerate}
+    \item \mintinline{c}|mips_detect_memory()|;
+    \item \mintinline{c}|mips_vm_init()|;
+    \item \mintinline{c}|page_init()|;
+  \end{enumerate}
+
+  这三个函数来实现物理内存管理的相关数据结构的初始化。
+
 \subsection{内存控制块}
 
-在MIPS CPU 中，地址转换以4KB 大小为单位，称为页。我们使用 Page 结构体来作为记录一页内存的相关信息
-的数据结构：
+在MIPS CPU 中，地址转换以4KB 大小为单位，称为页。整个物理内存按4KB大小分成了许多页，我们大多数时候的
+内存分配，也是以页为单位来进行。为了记录分配情况，我们需要使用 Page 结构体来记录一页内存的相关信息：
 
 \begin{minted}[linenos]{c}
 typedef LIST_ENTRY(Page) Page_LIST_entry_t;
@@ -82,7 +105,11 @@ struct Page {
 中定义了一系列的宏函数来简化对链表的操作。请阅读这些宏函数的代码，理解它们的原理和巧妙之处。
 
 \begin{thinking}\label{think-do_while}
+<<<<<<< HEAD
 我们注意到我们把宏函数的函数体写成了 \mintinline{c}|do{/* ... */}while(0)| 的形式，而不是
+=======
+我们注意到我们把宏函数的函数体写成了 \mintinline{c}|do { /* ... */ } while(0)| 的形式，而不是
+>>>>>>> SivilTaram/master
 仅仅写成形如
 \mintinline{c}|{ /* ... */ }| 的语句块，这样的写法好处是什么？
 \end{thinking}
@@ -95,6 +122,12 @@ LIST_HEAD(Page_list, Page);
 
 static struct Page_list page_free_list; /* Free list of physical pages */
 \end{minted}
+
+\begin{thinking}\label{think-Struct page}
+注意，我们定义的 Page 结构体只是一个信息的载体，它只代表了相应物理内存页的信息，它本身并不是物理内存页。
+那我们的物理内存页究竟在哪呢？Page 结构体又是通过怎样的方式找到它代表的物理内存页的地址呢？
+请你阅读 include/pmap.h 与 mm/pmap.c 中相关代码，给出你的想法。
+\end{thinking}
 
 \subsection{内存分配和释放}
 
@@ -112,9 +145,7 @@ u_long extmem;           /* Amount of extended memory(in bytes) */
 根据代码注释中的提示，完成 mips\_detect\_memory() 函数。
 \end{exercise}
 
-在操作系统刚刚启动时，我们还没有建立起有效的数据结构来管理所有的物理内存，因此， 出于最基本的
-内存管理的需求，我们需要实现一个函数来分配指定字节的物理内存。这一功能由 mm/pmap.c 中的
-alloc函数来实现。
+在操作系统刚刚启动时，我们还没有建立起有效的数据结构来管理所有的物理内存，因此，出于最基本的内存管理的需求，我们需要实现一个函数来分配指定字节的物理内存。这一功能由 mm/pmap.c 中的alloc函数来实现。
 
 \begin{minted}[linenos]{c}
 static void *alloc(u_int n, u_int align, int clear);
@@ -123,7 +154,12 @@ static void *alloc(u_int n, u_int align, int clear);
 alloc 函数能够按照参数 align 进行对齐，然后分配 n 字节大小的物理内存，并根据参数 clear 的设定决
 定是否将新分配的内存全部清零，并最终返回新分配的内存的首地址。
 
-有了分配物理内存的功能后，接下来我们需要给操作系统内核必须的数据结构 -- 页表（pgdir）、内存控制块
+\begin{thinking}\label{think-bzero}
+在 init.h 中定义了\mintinline{c}|bzero(void *b, size_t)|这样一个函数,请你思考，此处的b指针是一个物理地址，
+还是一个虚拟地址呢？
+\end{thinking}
+
+有了分配物理内存的功能后，接下来我们需要给操作系统内核必须的数据结构 -- 页目录（pgdir）、内存控制块
 数组（pages）和进程控制块数组（envs）分配所需的物理内存。mips\_vm\_init() 函数实现了这一功能，
 并且完成了相关的虚拟内存与物理内存之间的映射。
 
@@ -148,8 +184,8 @@ page\_free\_list 中去。思考如何区分已分配的内存块和未分配的
 
 \section{虚拟内存管理}
 
-我们通过建立两级页表来进行虚拟内存的管理，在此基础上，我们将实现在页表中根据虚拟地址在页表中查找
-对应的物理地址，将一段虚存地址映射到一段的物理地址，然后实现虚存的管理与释放，最后为内核建立起一
+我们通过建立两级页表来进行虚拟内存的管理，在此基础上，我们将实现根据虚拟地址在页表中查找
+对应的物理地址，以及将一段虚存地址映射到一段的物理地址的功能，然后实现虚存的管理与释放，最后为内核建立起一
 套虚存管理系统。
 
 \subsection{两级页表机制}
@@ -263,8 +299,8 @@ page\_free\_list 中去。思考如何区分已分配的内存块和未分配的
 \subsection{创建页表}
 
 将虚拟地址转换为物理地址的过程中，如果这个虚拟地址所对应的二级页表不存在，有时，我们可能需要为这个
-虚拟地址创建一个新的页表。我们需要申请一页物理内存，然后将他的物理地址赋值给对应的页目录项，最后设置
-好页目录项的权限位即可。
+虚拟地址创建一个新的页表。我们需要申请一页物理内存来存放这个页表，然后将他的物理地址赋值给对应的页
+目录项，最后设置好页目录项的权限位即可。
 
 我们的内核在 mm/pmap.c 中分定义了 boot\_pgdir\_walk 和 pgdir\_walk 两个函数来实现地址转换和
 页表的创建，这两个函数的区别仅仅在于当虚存地址所对应的页表的页面不存在的时候，分配策略的不同和使用的
@@ -284,7 +320,7 @@ page\_free\_list 中去。思考如何区分已分配的内存块和未分配的
 \end{exercise}
 
 \subsection{地址映射}
-
+一个空荡荡的页表自然不会对我们的内存翻译有帮助，我们需要在具体的物理内存与虚拟地址间建立映射，即将相应的物理页面地址填入对应虚拟地址的页表项中。
 \begin{exercise}
 实现 mm/pmap.c 中的 boot\_map\_segment 函数，实现将制定的物理内存与虚拟内存建立起映射的功能。
 \end{exercise}
@@ -361,7 +397,35 @@ page_insert(Pde *pgdir, struct Page *pp, u_long va, u_int perm)
 \begin{thinking}\label{think-tlb}
 思考一下tlb\_out 汇编函数，结合代码阐述一下跳转到\textbf{NOFOUND}的流程？
 \end{thinking}
+\subsection{访存与TLB重填}
+  通过之前的实验，我们可以知道，虚拟地址通过MMU转换成物理地址，然后通过物理地址我们能够在主存中获得相应的数据。而实际上，在MIPS架构中，关于这一块
+  内存翻译的内容，很大程度上与TLB有关。TLB可以看做是一块页表的高速缓存，里面存储了一些物理页面与虚拟页面的对应关系。而当CPU访问相应内存地址时，会先去
+  TLB中查询。当TLB中没有相应对应关系时会触发一个\textbf{TLB缺失异常}。而而MIPS将这个异常的处理，全权交给了软件。因此若发生缺失异常，则会跳转到相应异常处理程序中，
+  再由我们的二级页表进行相应的地址翻译，对TLB进行重填。换句话说，MIPS中并没有一个执行内存地址翻译的MMU处理器，CPU完成了相应工作。
 
+  为了深究整个过程，我们需要设置好相应的链接脚本，使得mips的异常处理机制能够正常工作（关于此处和异常的详情请参照lab3中相关内容）
+
+  接着我们在page\_check最后一句printf之前添加如下代码段。
+  \begin{minted}[linenos]{c}
+    u_long* va = 0x12450;
+    u_long* pa;
+
+    page_insert(boot_pgdir, pp, va, PTE_R);
+    pa = va2pa(boot_pgdir, va);
+    printf("va: \%x -> pa: \%x\\n", va, pa);
+    *va = 0x88888;
+    printf("va value: \%x\\n", *va);
+    printf("pa value: \%x\\n", *((u_long *)((u_long)pa + (u_long)ULIM)));
+  \end{minted}
+
+  这段代码旨在计算出相应va与pa的对应关系，设置权限位为PTE\_R是为了能够将数据写入内存。
+  \begin{thinking}\label{think-memory-access}
+  显然，运行后结果与我们预期的不符，va值为0x88888，相应的pa中的值为0。这说明我们的代码中存在问题，请你仔细思考我们的访存模型，指出问题所在。
+  \end{thinking}
+  \begin{thinking}\label{think-tlb-refill}
+  在gxemul中，通过添加-t参数能够看到镜像中函数调用关系，请你善加利用这个特性，找出与tlb重填有关的函数。
+  \end{thinking}
+  另外，还可以提醒大家的是，在gxemul中，有tlbdump这个命令，可以随时查看tlb中的内容。
 \section{正确结果展示}
 
 实验二做完之后，正确的结果应该是这样的：
@@ -389,8 +453,11 @@ panic at init.c:55: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 \begin{itemize}
 \item \hyperref[think-do_while]{\textbf{\textcolor{baseB}{思考-使用do-while(0)语句的好处}}}
+\item \hyperref[think-bzero]{\textbf{\textcolor{baseB}{思考-bzero参数探究}}}
 \item \hyperref[think-windows_pde_addr]{\textbf{\textcolor{baseB}{思考-自映射机制页目录地址的计算}}}
 \item \hyperref[think-tlb]{\textbf{\textcolor{baseB}{思考-NOFOUND的奥妙}}}
+\item \hyperref[think-memory-access]{\textbf{\textcolor{baseB}{思考-访存的问题}}}
+\item \hyperref[think-tlb-refill]{\textbf{\textcolor{baseB}{思考-寻找重填函数}}}
 \end{itemize}
 
 \section{挑战性任务}

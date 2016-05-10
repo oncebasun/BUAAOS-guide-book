@@ -1,6 +1,9 @@
 # BUAA Operating System Experiment Guide Book [![Build Status](https://travis-ci.org/SivilTaram/BUAAOS-guide-book.svg?branch=master)](https://travis-ci.org/SivilTaram/BUAAOS-guide-book)
 ## ChangeLog
 
+### 2016/5/9
+Fixed some decription on lab4.
+
 ### 2016/3/28
 Use [Travis-CI](https://travis-ci.org/SivilTaram/BUAAOS-guide-book/builds) to build automatically and upload. You can get the latest version in [releases](https://github.com/SivilTaram/BUAAOS-guide-book/releases).
 
@@ -94,3 +97,4 @@ And then you can make a pull request.
 - He Tao(@[sighingnow](https://github.com/sighingnow))
 - Liu Qian(@[SivilTaram](https://github.com/SivilTaram))
 - Wang Luming(@[fzyz999](https://github.com/fzyz999))
+- Wang Zhengdong(@[Jueast](https://github.com/Jueast))
