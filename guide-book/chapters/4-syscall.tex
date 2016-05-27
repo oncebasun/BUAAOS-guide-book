@@ -514,7 +514,7 @@ pgfault很简单，按下述步骤执行即可：
 \end{exercise}
 
 \subsubsection{fork}
-fork的填写参见上述关于父子进程各自任务的描述。其中比较难思考的一点在于\textbf{如何遍历父进程的用户空间}。在这里你需要使用vpd与vpt宏,这两个宏的用法需要你自行思考。
+fork的填写参见上述关于父子进程各自任务的描述。其中比较难思考的一点在于\textbf{如何遍历父进程的用户空间}。在这里你需要使用vpd与vpt数组,这两个数组的用法需要你自行思考。
 
 \begin{exercise}
 结合上文描述与注释，将 user/fork.c 中的函数 fork填充完整。
@@ -523,7 +523,7 @@ fork的填写参见上述关于父子进程各自任务的描述。其中比较�
 \begin{thinking}\label{think:vpt的使用}
 	请结合代码与示意图,回答以下两个问题：
 	
-	1、vpt和vpd宏的作用是什么,如何使用它们？
+	1、vpt和vpd的作用是什么,如何使用它们？
 	
 	2、它们出现的背景是什么? 如果让你在lab2中要实现同样的功能,可以怎么写？
 \end{thinking}
@@ -631,29 +631,105 @@ panic at init.c:31: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 pageout:	@@@___0x7f3fe000___@@@  ins a page 
 
-pingpong is running
 
-Fmars : parent env
+@@@@@send 0 from 800 to 1001
 
-Parent begins to send
+1001 am waiting.....
 
-1001 got 7777 from 800
+800 am waiting.....
+
+1001 got 0 from 800
+
+
 
 @@@@@send 1 from 1001 to 800
 
-[00001001] destroying 00001001
-
-[00001001] free env 00001001
-
-i am killed ... 
+1001 am waiting.....
 
 800 got 1 from 1001
+
+
+
+@@@@@send 2 from 800 to 1001
+
+800 am waiting.....
+
+1001 got 2 from 800
+
+
+
+@@@@@send 3 from 1001 to 800
+
+1001 am wa800 got 3 from 1001
+
+
+
+@@@@@send 4 from 800 to 1001
+
+iting.....
+
+800 am waiting.....
+
+1001 got 4 from 800
+
+
+
+@@@@@send 5 from 1001 to 800
+
+1001 am waiting.....
+
+800 got 5 from 1001
+
+
+
+@@@@@send 6 from 800 to 1001
+
+800 am waiting.....
+
+1001 got 6 from 800
+
+
+
+@@@@@send 7 from 1001 to 800
+
+1001 am waiting.....
+
+800 got 7 from 1001
+
+
+
+@@@@@send 8 from 800 to 1001
+
+800 am waiting.....
+
+1001 got 8 from 800
+
+
+
+@@@@@send 9 from 1001 to 800
+
+1001 am waiting.....
+
+800 got 9 from 1001
+
+
+
+@@@@@send 10 from 800 to 1001
 
 [00000800] destroying 00000800
 
 [00000800] free env 00000800
 
-i am killed ... 
+i am killed ...
+
+1001 got 10 from 800
+
+[00001001] destroying 00001001
+
+[00001001] free env 00001001
+
+i am killed ...
+
 \end{minted}
 
 \section{实验思考}
@@ -662,8 +738,9 @@ i am killed ...
 	\item \hyperref[think-father-son]{\textbf{\textcolor{baseB}{思考-不同的进程代码执行}}}
 	\item \hyperref[think-fork的调用]{\textbf{\textcolor{baseB}{思考-fork的返回结果}}}
 	\item \hyperref[think:遍历页]{\textbf{\textcolor{baseB}{思考-用户空间的保护}}}
-	\item \hyperref[think:vpt的使用]{\textbf{\textcolor{baseB}{思考-vpt宏的使用}}}
+	\item \hyperref[think:vpt的使用]{\textbf{\textcolor{baseB}{思考-vpt的使用}}}
 \end{itemize}
 
 \section{挑战性任务}
-我们现在实现的fork是有写时复制机制的,而sfork中是没有
+我们现在实现的fork是有写时复制机制的,而sfork中是没有的。父子进程在sfork结束后仍然一直共享公共区。本次的挑战性任务就是实现sfork。
+
